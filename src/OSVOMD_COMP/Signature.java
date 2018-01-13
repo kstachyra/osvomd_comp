@@ -135,7 +135,7 @@ public class Signature
                 pickIdx = i;
             }
         }
-        //Log.d("pdi.kkk", "wybrano podpis o inx " + pickIdx + "który mia³ najgorsz¹ wartoœæ jedynie " + bestScore);
+        System.out.print("pdi.kkk." + "wybrano podpis o inx " + pickIdx + "który mia³ najgorsz¹ wartoœæ jedynie " + bestScore);
         return hiddenSignatures.get(pickIdx);
     }
 
@@ -152,7 +152,7 @@ public class Signature
         {
             if (s.points.size() != size)
             {
-                //Log.d("pdi.signature.err", "different signatures size!");
+            	System.out.print("pdi.signature.err" + "different signatures size!");
                 return null;
             }
         }
@@ -256,12 +256,12 @@ public class Signature
         double value = dtw.warpingDistance;
 
         long timeDif = abs(sig1.getSignatureTime() - sig2.getSignatureTime()) / ((sig1.getSignatureTime() + sig2.getSignatureTime())/2);
-        //Log.d("pdi.kkk", "Stare value " + value);
+        System.out.print("pdi.kkk" + "Stare value " + value);
         if(timeDif > SIGNATURE_TIME_LIMIT)
         {
             value += (timeDif-SIGNATURE_TIME_LIMIT)*SIGNATURE_TIME_WEIGHT;
         }
-        //Log.d("pdi.kkk", "nowe value " + value);
+        System.out.print("pdi.kkk" + "nowe value " + value);
 
         //TODO ustalenie wyniku, wartoœci jakie wp³ywaj¹ na wynik porównania
         return value;
@@ -293,10 +293,10 @@ public class Signature
                 this.clearBeginEnd();
                 this.resize();
                 this.reTime();
-                //Log.d("pdi.signature", "signature normalized");
+                System.out.print("pdi.signature" + "signature normalized");
             } else
             {
-                //Log.d("pdi.signature", "can't normalize, !points.size > 0");
+            	System.out.print("pdi.signature" + "can't normalize, !points.size > 0");
             }
         }
         catch (Exception e)
@@ -441,7 +441,7 @@ public class Signature
     {
         for (Point p : points)
         {
-            //Log.d("pdi.signature", p.toString());
+            System.out.print("pdi.signature." + p.toString());
         }
     }
 

@@ -4,8 +4,10 @@ import OSVOMD_COMP.Point;
 
 /**Zmodyfikowana klasa, zmieniona na typ generyczny i podejœcie do generowania œcie¿ki marszczenia,
  * na podstawie kodu autorstwa Cheol-Woo Jung (cjung@gatech.edu) i Muhammad Muaaz
+ * 
  * @param <T> typ przechowywanych i porównywanych danych, musi imlementowaæ Distancable
  */
+@SuppressWarnings("rawtypes")
 public class DTW <T extends DTW.Distancable>
 {
 
@@ -37,7 +39,8 @@ public class DTW <T extends DTW.Distancable>
     }
 
     /**wyliczanie œcie¿ki marszczenia i wartoœci odleg³oœci*/
-    public void compute()
+    @SuppressWarnings("unchecked")
+	public void compute()
     {
         double accumulatedDistance = 0.0;
 
@@ -169,7 +172,7 @@ public class DTW <T extends DTW.Distancable>
     }
 
     /**interfejs do zwracania odleg³oœci miêdzy dwoma obiektami*/
-    public interface Distancable<T extends Distancable>
+    public interface Distancable<T extends Distancable<?>>
     {
         double distance(T other);
     }
@@ -188,10 +191,8 @@ public class DTW <T extends DTW.Distancable>
             {
                 Log.d("pdi.DTW", i + " " + j + " ->> " + dtw.warpingPath[i][j]);
             }
-        }
+        }*/
 
-        Log.d("pdi.DTW","Accumulated distance between the series is :  " + dtw.getAccumulatedDistance());
-        Log.d("pdi.DTW","Warping Distance is between the series is :  " + dtw.getWarpingDistance());*/
-        //Log("pdi.DTW", dtw.toString());
+        dtw.toString();
     }
 }

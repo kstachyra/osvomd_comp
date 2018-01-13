@@ -84,7 +84,8 @@ public class OSVOMD_COMP
 
         FileInputStream is;
         BufferedReader br;
-        final File file = new File(getFilePath() + "/SUSig/" + filename);
+        File mainDir = getFilePath();
+        final File file = new File(mainDir.getAbsolutePath()+ "/SUSig/" + filename);
 
         //wszystkie linie pliku
         LinkedList<String> lines = new LinkedList<String>();
@@ -106,7 +107,7 @@ public class OSVOMD_COMP
 	        }
 	        else
 	        {
-	            System.out.println("pdi.loadSUSig" + "plik " + filename + " " + "nie istnieje");
+	            System.out.print("pdi.loadSUSig." + "plik " + filename + " " + "nie istnieje");
 	            return null;
 	        }
         } catch (IOException e)
@@ -123,7 +124,7 @@ public class OSVOMD_COMP
         }
         else
         {
-            System.out.print("pdi.loadSUSig" + "plik " + filename + " " + "niepoprawny");
+            System.out.print("pdi.loadSUSig." + "plik " + filename + " " + "niepoprawny");
             return null;
         }
 
@@ -136,7 +137,7 @@ public class OSVOMD_COMP
             }
             else
             {
-                System.out.print("pdi.loadSUSig" +"plik " + filename + " " + "niepoprawny");
+                System.out.print("pdi.loadSUSig." +"plik " + filename + " " + "niepoprawny");
                 return null;
             }
         }
@@ -177,7 +178,7 @@ public class OSVOMD_COMP
         	}
         	else
         	{
-        		System.out.print("pdi.loadSVC" + "plik " + filename + " " + "nie istnieje");
+        		System.out.print("pdi.loadSVC." + "plik " + filename + " " + "nie istnieje");
         		return null;
         	}
         } catch (IOException e)
@@ -193,7 +194,7 @@ public class OSVOMD_COMP
         }
         else
         {
-            System.out.print("pdi.loadSVC" + "plik " + filename + " " + "niepoprawny");
+            System.out.print("pdi.loadSVC." + "plik " + filename + " " + "niepoprawny");
             return null;
         }
 
@@ -206,7 +207,7 @@ public class OSVOMD_COMP
             }
             else
             {
-                System.out.print("pdi.loadSVC" +  "plik " + filename + " " + "niepoprawny");
+                System.out.print("pdi.loadSVC." +  "plik " + filename + " " + "niepoprawny");
                 return null;
             }
         }
