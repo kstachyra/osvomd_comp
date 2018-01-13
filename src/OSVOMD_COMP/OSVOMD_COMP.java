@@ -20,54 +20,36 @@ public class OSVOMD_COMP
 	public static void main(String[] args)
 	{
 		Signature sig = new Signature();
-		writeSigToFile(sig.name, sig);
-
-		ERRsusig(20);
-	}
-
-
-	private static void ERRsusig(int noSigners)
-	{
-		ArrayList<LinkedList<Signature>> genuine = new ArrayList<>();
+		
+		ArrayList<LinkedList<Signature>> genuine1 = new ArrayList<>();
+		ArrayList<LinkedList<Signature>> genuine2 = new ArrayList<>();
 		ArrayList<LinkedList<Signature>> forgery = new ArrayList<>();
 		ArrayList<LinkedList<Signature>> skilled = new ArrayList<>();
+		
+		loadAllSUSig(genuine1, genuine2, forgery, skilled, 20);
+		
+		ArrayList<Signature> template = new ArrayList();
+		TemplateSusig(template, genuine1, genuine2);
+		
+		
+		
+		
+		
+		ERRsusig(genuine1, genuine2, 2);
+	}
 
-		genuine.add(0, new LinkedList<Signature>());
-		for (int i=1; i<=noSigners; ++i)
-		{
-			genuine.add(i, new LinkedList<Signature>());
-			for (int j=1; j<=10; ++j)
-			{
-				String filename = String.format("%03d", i) + "_1_" + j + ".sig";
-				Signature s = loadSUSigFile(filename);
-				if (s!= null) genuine.get(i).add(s);
-			}
-		}
+	private static void TemplateSusig(final ArrayList<Signature> template, final ArrayList<LinkedList<Signature>> genuine1, final ArrayList<LinkedList<Signature>> genuine2)
+	{
+		// TODO Auto-generated method stub
+		
+	}
 
-		forgery.add(0, new LinkedList<Signature>());
-		for (int i=1; i<=noSigners; ++i)
-		{
-			forgery.add(i, new LinkedList<Signature>());
-			for (int j=1; j<=5; ++j)
-			{
-				String filename = String.format("%03d", i) + "_f_" + j + ".sig";
-				Signature s = loadSUSigFile(filename);
-				if (s!= null) forgery.get(i).add(s);
-			}
-		}
-
-		skilled.add(0, new LinkedList<Signature>());
-		for (int i=1; i<=noSigners; ++i)
-		{
-			skilled.add(i, new LinkedList<Signature>());
-			for (int j=6; j<=10; ++j)
-			{
-				String filename = String.format("%03d", i) + "_f_" + j + ".sig";
-				Signature s = loadSUSigFile(filename);
-				if (s!= null) skilled.get(i).add(s);
-			}
-		}
-
+	private static void ERRsusig(final ArrayList<LinkedList<Signature>> genuine1, final ArrayList<LinkedList<Signature>> genuine2, final int noSigners)
+	{
+		ArrayList<LinkedList<Signature>> genuine = new ArrayList<>();
+		genuine.addAll(genuine1);
+		genuine.addAll(genuine2);
+		
 		int ping = 0;
 		List<Double> sameScores = new LinkedList<>();
 		List<Double> otherScores = new LinkedList<>();
@@ -106,6 +88,59 @@ public class OSVOMD_COMP
 
 		System.out.println("EER.sameScores " + sameScores.toString() );
 		System.out.println("EER.otherScores " + otherScores.toString() );
+	}
+
+	/* ³aduje okreœlon¹ liczbê podpisów do struktur*/
+	private static void loadAllSUSig(ArrayList<LinkedList<Signature>> genuine1, ArrayList<LinkedList<Signature>> genuine2, ArrayList<LinkedList<Signature>> forgery,
+			ArrayList<LinkedList<Signature>> skilled, int noSigners)
+	{
+		genuine1.add(0, new LinkedList<Signature>());
+		for (int i=1; i<=noSigners; ++i)
+		{
+			genuine1.add(i, new LinkedList<Signature>());
+			for (int j=1; j<=10; ++j)
+			{
+				String filename = String.format("%03d", i) + "_1_" + j + ".sig";
+				Signature s = loadSUSigFile(filename);
+				if (s!= null) genuine1.get(i).add(s);
+			}
+		}
+		
+		genuine2.add(0, new LinkedList<Signature>());
+		for (int i=1; i<=noSigners; ++i)
+		{
+			genuine2.add(i, new LinkedList<Signature>());
+			for (int j=1; j<=10; ++j)
+			{
+				String filename = String.format("%03d", i) + "_2_" + j + ".sig";
+				Signature s = loadSUSigFile(filename);
+				if (s!= null) genuine2.get(i).add(s);
+			}
+		}
+
+		forgery.add(0, new LinkedList<Signature>());
+		for (int i=1; i<=noSigners; ++i)
+		{
+			forgery.add(i, new LinkedList<Signature>());
+			for (int j=1; j<=5; ++j)
+			{
+				String filename = String.format("%03d", i) + "_f_" + j + ".sig";
+				Signature s = loadSUSigFile(filename);
+				if (s!= null) forgery.get(i).add(s);
+			}
+		}
+
+		skilled.add(0, new LinkedList<Signature>());
+		for (int i=1; i<=noSigners; ++i)
+		{
+			skilled.add(i, new LinkedList<Signature>());
+			for (int j=6; j<=10; ++j)
+			{
+				String filename = String.format("%03d", i) + "_f_" + j + ".sig";
+				Signature s = loadSUSigFile(filename);
+				if (s!= null) skilled.get(i).add(s);
+			}
+		}	
 	}
 
 
