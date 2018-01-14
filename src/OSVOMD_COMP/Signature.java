@@ -55,6 +55,11 @@ public class Signature
      */
     static public Signature templateSignature(List<Signature> signatures, int maxInterations)
     {
+    	if (signatures.isEmpty())
+    	{
+    		return null;
+    	}
+    	
         Signature template = new Signature();
 
         //kopia listy signatures

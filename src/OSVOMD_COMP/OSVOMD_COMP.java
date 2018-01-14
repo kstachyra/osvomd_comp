@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,40 +21,125 @@ public class OSVOMD_COMP
 
 	public static void main(String[] args)
 	{
-		Signature sig = new Signature();
+		int noSigners = 4;
 		
 		ArrayList<LinkedList<Signature>> genuine1 = new ArrayList<>();
 		ArrayList<LinkedList<Signature>> genuine2 = new ArrayList<>();
 		ArrayList<LinkedList<Signature>> forgery = new ArrayList<>();
 		ArrayList<LinkedList<Signature>> skilled = new ArrayList<>();
 		
-		loadAllSUSig(genuine1, genuine2, forgery, skilled, 20);
+		loadAllSUSig(genuine1, genuine2, forgery, skilled, noSigners);
 		
-		ArrayList<Signature> template = new ArrayList();
-		TemplateSusig(template, genuine1, genuine2);
+		ArrayList<Signature> template = new ArrayList<Signature>();
+		ArrayList<LinkedList<Double>> templateScore = new ArrayList<>();
+		//templateSusig(template, templateScore, genuine1, genuine2, 10,  10, 10, noSigners);
+		
+		/*for(int i=0; i<templateScore.size(); ++i)
+		{
+			System.out.print("PODPIS "+i+": ");
+			if (templateScore.get(i)!=null)
+			{
+				for (Double s : templateScore.get(i))
+				{
+					System.out.print(s + " ");
+				}
+			}
+			System.out.println("");
+		}*/
 		
 		
 		
 		
 		
-		ERRsusig(genuine1, genuine2, 2);
+		ERR(genuine1, genuine2, forgery, skilled, noSigners);
 	}
 
-	private static void TemplateSusig(final ArrayList<Signature> template, final ArrayList<LinkedList<Signature>> genuine1, final ArrayList<LinkedList<Signature>> genuine2)
+	/**
+	 * tworzy wzorce z listy podpisów i weryfikuje ich wyniki z pozosta³ymi
+	 * @param template lista do której s¹ zapisywane wzorce
+	 * @param templateScore lista do której s¹ zapisywane wyniki porównañ ze zbiorem weryfikacyjnym
+	 * @param genuine1 zbiór podpisów1
+	 * @param genuine2 zniór podpisów 2
+	 * @param maxIterations maksymalna iteracja pry tworzeniu podpisu
+	 * @param noTemplate liczba podpisów przeznaczona na zbiór tworz¹cy wzorzec
+	 * @param noVerification liczba podpisów przeznaczona na zbiór weryfikacyjny
+	 * @param noSigners liczba osób podpisuj¹cych siê, dla których wykonaywane s¹ obliczenia
+	 */
+	private static void templateSusig(ArrayList<Signature> template, ArrayList<LinkedList<Double>> templateScore,
+			final ArrayList<LinkedList<Signature>> genuine1, final ArrayList<LinkedList<Signature>> genuine2, 
+			int maxIterations, int noTemplate, int noVerification, int noSigners)
 	{
-		// TODO Auto-generated method stub
+		if (noTemplate + noVerification > 20)
+		{
+			System.out.println("templateSusig.zla liczba podpisów > wzorzec+weryfikacja!");
+			return;
+		}
 		
+		noTemplate /= 2;
+		noVerification /= 2;
+		
+		template.clear();
+		template.add(null);
+		
+		
+		for (int i=1; i<=noSigners; ++i)
+		{
+			LinkedList<Signature> signatures = new LinkedList<>();
+			
+			if (!genuine1.get(i).isEmpty() && !genuine2.isEmpty())
+			{
+				for (int j=0; j<noTemplate; ++j)
+				{
+					signatures.add(genuine1.get(i).get(j));
+					signatures.add(genuine2.get(i).get(j));
+				}
+			}
+			Signature newTemplate = Signature.templateSignature(signatures, maxIterations);
+			template.add(i, newTemplate);
+			
+			signatures.clear();
+		}
+		
+		
+		//wyniki dla zbioru weryfikacyjnego
+		templateScore.clear();
+		templateScore.add(null);
+		
+		for (int i = 1; i<=noSigners; ++i)
+		{
+			templateScore.add(i, new LinkedList<Double>());
+			
+			if (!genuine1.get(i).isEmpty() && !genuine2.isEmpty())
+			{
+				for (int j=noTemplate; j<noTemplate+noVerification; ++j)
+				{
+					Double newScore = Signature.compare(template.get(i), genuine1.get(i).get(j));
+					templateScore.get(i).add(newScore);	
+					newScore = Signature.compare(template.get(i), genuine2.get(i).get(j));
+					templateScore.get(i).add(newScore);
+				}
+			}
+		}		
 	}
 
-	private static void ERRsusig(final ArrayList<LinkedList<Signature>> genuine1, final ArrayList<LinkedList<Signature>> genuine2, final int noSigners)
+	
+	private static void ERR(final ArrayList<LinkedList<Signature>> genuine1, final ArrayList<LinkedList<Signature>> genuine2,
+			ArrayList<LinkedList<Signature>> forgery, ArrayList<LinkedList<Signature>> skilled,
+			final int noSigners)
 	{
 		ArrayList<LinkedList<Signature>> genuine = new ArrayList<>();
-		genuine.addAll(genuine1);
-		genuine.addAll(genuine2);
 		
+		genuine.addAll(genuine1);
+		for (int i=1; i<=noSigners; ++i)
+		{
+			genuine.get(i).addAll(genuine2.get(i));
+		}
+				
 		int ping = 0;
 		List<Double> sameScores = new LinkedList<>();
 		List<Double> otherScores = new LinkedList<>();
+		List<Double> forgeryScores = new LinkedList<>();
+		List<Double> skilledScores = new LinkedList<>();
 		for (int i=1; i<=noSigners; ++i)
 		{
 			for (int j=1; j<=noSigners; ++j)
@@ -66,6 +153,23 @@ public class OSVOMD_COMP
 						for (Signature s2 : genuine.get(j))
 						{
 							sameScores.add(Signature.compare(s1, s2));
+						}
+					}
+					
+					//forgery
+					for (Signature s1 : genuine.get(i))
+					{
+						for (Signature forge : forgery.get(j))
+						{
+							forgeryScores.add(Signature.compare(s1, forge));
+						}
+					}
+					//skilled
+					for (Signature s1 : genuine.get(i))
+					{
+						for (Signature skill : skilled.get(j))
+						{
+							skilledScores.add(Signature.compare(s1, skill));
 						}
 					}
 				}
@@ -84,15 +188,52 @@ public class OSVOMD_COMP
 		}
 
 		writeToFile("same_"+getDate(), sameScores.toString());
+		System.out.println("EER.sameScores OK");
 		writeToFile("other_"+getDate(), otherScores.toString());
-
-		System.out.println("EER.sameScores " + sameScores.toString() );
-		System.out.println("EER.otherScores " + otherScores.toString() );
+		System.out.println("EER.otherScores OK");
+		
+		writeToFile("forgery_"+getDate(), forgeryScores.toString());
+		System.out.println("EER.forgeryScores OK");
+		writeToFile("skilled_"+getDate(), skilledScores.toString());
+		System.out.println("EER.skilledScores OK");
+		
+		writeToFile("sameHist_"+getDate(), histogram(sameScores, 0.001).toString());
+		writeToFile("otherHist_"+getDate(), histogram(otherScores, 0.001).toString());
+		writeToFile("forgeryHist_"+getDate(), histogram(forgeryScores, 0.001).toString());
+		writeToFile("skilledHist_"+getDate(), histogram(skilledScores, 0.001).toString());
 	}
 
-	/* ³aduje okreœlon¹ liczbê podpisów do struktur*/
-	private static void loadAllSUSig(ArrayList<LinkedList<Signature>> genuine1, ArrayList<LinkedList<Signature>> genuine2, ArrayList<LinkedList<Signature>> forgery,
-			ArrayList<LinkedList<Signature>> skilled, int noSigners)
+	/** tworzy histogram z listy wartoœci*/
+	private static String histogram(final List<Double> scores, double step)
+	{
+		Double maxVal = Collections.max(scores);
+		Double temp = (maxVal/step);
+		Integer noBuckets = temp.intValue() +1;
+		
+		int[] hist = new int[noBuckets];
+		
+		for (Double s : scores)
+		{
+			Double d = s/step;
+			hist[d.intValue()]++;
+		}
+		
+		
+		List<Integer> histList = new LinkedList<>();
+		for (int i=0; i<noBuckets; ++i)
+		{
+			histList.add(hist[i]);
+		}
+		
+		String result = histList.toString().replace("[", "");
+		result = result.replace("]", "");
+		result = result.replace(" ", "");
+		return result;	
+	}
+
+	/** ³aduje okreœlon¹ liczbê podpisów do struktur*/
+	private static void loadAllSUSig(ArrayList<LinkedList<Signature>> genuine1, ArrayList<LinkedList<Signature>> genuine2,
+			ArrayList<LinkedList<Signature>> forgery, ArrayList<LinkedList<Signature>> skilled, int noSigners)
 	{
 		genuine1.add(0, new LinkedList<Signature>());
 		for (int i=1; i<=noSigners; ++i)
