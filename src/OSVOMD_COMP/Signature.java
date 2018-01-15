@@ -140,7 +140,7 @@ public class Signature
                 pickIdx = i;
             }
         }
-        System.out.println("pdi.kkk." + "wybrano podpis o inx " + pickIdx + "który mia³ najgorsz¹ wartoœæ jedynie " + bestScore);
+        //System.out.println("pdi.kkk." + "wybrano podpis o inx " + pickIdx + "który mia³ najgorsz¹ wartoœæ jedynie " + bestScore);
         return hiddenSignatures.get(pickIdx);
     }
 
@@ -250,26 +250,23 @@ public class Signature
 
     /**porównuje dwa podpisy
      *
-     * @param sig1 pierwszy podpis
-     * @param sig2 drugi podpis
+     * @param veryfied pierwszy podpis
+     * @param template drugi podpis
      * @return comaprison value (more -> more different signatures)
      */
-    static public double compare(Signature sig1, Signature sig2)
+    static public double compare(Signature veryfied, Signature template)
     {
-        DTW<Point> dtw = new DTW<>(sig1.getPointArray(), sig2.getPointArray());
+        DTW<Point> dtw = new DTW<>(veryfied.getPointArray(), template.getPointArray());
 
         double value = dtw.warpingDistance;
 
-        long timeDif = abs(sig1.getSignatureTime() - sig2.getSignatureTime()) / ((sig1.getSignatureTime() + sig2.getSignatureTime())/2);
+        long timeDif = abs(veryfied.getSignatureTime() - template.getSignatureTime()) / template.getSignatureTime();
         
-        double oldValue = value;
         if(timeDif > SIGNATURE_TIME_LIMIT)
         {
             value += (timeDif-SIGNATURE_TIME_LIMIT)*SIGNATURE_TIME_WEIGHT;
-            
-            System.out.println("pdi.kkk" + "Stare value " + oldValue);
-            System.out.println("pdi.kkk" + "nowe value " + value);
         }
+        
         //TODO ustalenie wyniku, wartoœci jakie wp³ywaj¹ na wynik porównania
         return value;
     }
