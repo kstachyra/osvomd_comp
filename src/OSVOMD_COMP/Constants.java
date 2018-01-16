@@ -21,13 +21,13 @@ public class Constants
     public final static int MAX_PATTERN_ITERATIONS = 10;
 
     /*compare*/
-    public static double X_W = 1;
-    public static double Y_W = 1;
-    public static double P_W = 0.1;
+    public static double X_W = 0.8;
+    public static double Y_W = 2.0;
+    public static double P_W = 0.5;
     public static double T_W = 0.0000001;
 
     /*procentowa ignorowana róznica czasu*/
-    public static double SIGNATURE_TIME_LIMIT = 0.1;
+    public static double SIGNATURE_TIME_LIMIT = 0.27;
     
-    public static double SIGNATURE_TIME_WEIGHT = 1;
+    public static double SIGNATURE_TIME_WEIGHT = 0.5;
 }

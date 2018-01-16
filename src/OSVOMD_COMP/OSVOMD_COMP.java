@@ -22,7 +22,7 @@ public class OSVOMD_COMP
 	{
 		//54 -> 35 userów!
 		//25 -> 20 userów!
-		int noSigners = 25;
+		int noSigners = 120;
 		
 		ArrayList<LinkedList<Signature>> genuine1 = new ArrayList<>();
 		ArrayList<LinkedList<Signature>> genuine2 = new ArrayList<>();
@@ -33,38 +33,26 @@ public class OSVOMD_COMP
 		ArrayList<Signature> template = new ArrayList<Signature>();
 		
 		//usuwa te wykorzystane do tworzenia wzorca!!!
-		templateHidden(template, genuine1, genuine2, 10,  10, noSigners);
-		
+		//templateHidden(template, genuine1, genuine2, 10,  10, noSigners);
 		templateAverage(template, genuine1, genuine2, 10, noSigners);
-		templateBest(template, genuine1, genuine2, 10, noSigners);
+		//templateBest(template, genuine1, genuine2, 10, noSigners);
 
-		System.out.println(ERR(genuine1, genuine2, forgery, template, noSigners));
+		writeToFile("EER_"+getDate(), ERR(genuine1, genuine2, forgery, template, noSigners));
+		System.out.println("OK!");
 		
 		//generateScript();
 	}
 
-	private static void templateBest(ArrayList<Signature> template, final ArrayList<LinkedList<Signature>> genuine1,
-			final ArrayList<LinkedList<Signature>> genuine2, int noTemplate, int noSigners)
-	{
-		// TODO Auto-generated method stub
-		
-	}
 
-	private static void templateAverage(ArrayList<Signature> template, final ArrayList<LinkedList<Signature>> genuine1,
-			final ArrayList<LinkedList<Signature>> genuine2, int noTemplate, int noSigners)
-	{
-		// TODO Auto-generated method stub
-		
-	}
 
 	private static void generateScript()
 	{
 		String turboString = "";
-		for (Constants.X_W = 0.0; Constants.X_W <= 2.0; Constants.X_W += 0.4) //5
+		for (Constants.X_W = 0.7; Constants.X_W <= 0.9; Constants.X_W += 0.1) //3
 		{
-			for (Constants.Y_W = 0.0; Constants.Y_W <= 2.0; Constants.Y_W += 0.4) //5
+			for (Constants.Y_W = 1.0; Constants.Y_W <= 2.0; Constants.Y_W += 0.2) //6
 			{
-				for (Constants.P_W = 0.0; Constants.P_W <= 0.5; Constants.P_W += 0.1) //5
+				for (Constants.P_W = 0.3; Constants.P_W <= 0.6; Constants.P_W += 0.1) //4
 				{
 					turboString += "java -jar .\\OSVOMD_C.jar " + Constants.X_W + " " + Constants.Y_W + " " + Constants.P_W + " " + Constants.T_W + " && ";
 				}
@@ -124,6 +112,94 @@ public class OSVOMD_COMP
 		}
 	}
 
+	private static void templateBest(ArrayList<Signature> template, final ArrayList<LinkedList<Signature>> genuine1,
+			final ArrayList<LinkedList<Signature>> genuine2, int noTemplate, int noSigners)
+	{
+		if (noTemplate > 20)
+		{
+			System.out.println("templateSusig.zla liczba podpisów > wzorzec!");
+			return;
+		}
+		
+		noTemplate /= 2;
+		
+		template.clear();
+		template.add(null);
+		
+		for (int i=1; i<=noSigners; ++i)
+		{
+			LinkedList<Signature> signatures = new LinkedList<>();
+
+			Signature newTemplate = null;
+			if (!genuine1.get(i).isEmpty() && !genuine2.isEmpty())
+			{
+				for (int j=0; j<noTemplate; ++j)
+				{
+					signatures.add(genuine1.get(i).get(j));
+					signatures.add(genuine2.get(i).get(j));
+
+				}
+
+				newTemplate = Signature.pickBestSignature(signatures, signatures);
+			}
+			template.add(i, newTemplate);
+
+
+			genuine1.get(i).removeAll(signatures);
+			genuine2.get(i).removeAll(signatures);
+			
+			signatures.clear();
+		}
+		
+	}
+
+	private static void templateAverage(ArrayList<Signature> template, final ArrayList<LinkedList<Signature>> genuine1,
+			final ArrayList<LinkedList<Signature>> genuine2, int noTemplate, int noSigners)
+	{
+		if (noTemplate > 20)
+		{
+			System.out.println("templateSusig.zla liczba podpisów > wzorzec!");
+			return;
+		}
+		
+		noTemplate /= 2;
+		
+		template.clear();
+		template.add(null);
+		
+		for (int i=1; i<=noSigners; ++i)
+		{
+			LinkedList<Signature> signatures = new LinkedList<>();
+			
+			Signature newTemplate = null;
+			if (!genuine1.get(i).isEmpty() && !genuine2.isEmpty())
+			{
+				for (int j=0; j<noTemplate; ++j)
+				{
+					signatures.add(genuine1.get(i).get(j));
+					signatures.add(genuine2.get(i).get(j));
+
+				}
+
+				Signature bestTime = Signature.pickBestSignature(signatures, signatures);
+
+				LinkedList<Signature> sameTimeList = new LinkedList<>();
+				for (Signature s : signatures)
+				{
+					double[] scr = new double[1];
+					sameTimeList.add(s.warpToTime(bestTime, scr));
+				}
+
+				newTemplate = Signature.averageSignature(sameTimeList);
+			}
+			template.add(i, newTemplate);
+			
+			genuine1.get(i).removeAll(signatures);
+			genuine2.get(i).removeAll(signatures);
+			
+			signatures.clear();
+		}	
+	}
 	
 	private static String ERR(final ArrayList<LinkedList<Signature>> genuine1, final ArrayList<LinkedList<Signature>> genuine2,
 			final ArrayList<LinkedList<Signature>> forgery,
@@ -160,7 +236,7 @@ public class OSVOMD_COMP
 					{
 						for (Signature s2 : genuine.get(j))
 						{
-							sameScores.add(Signature.compare(s1, s2));
+							sameScores.add(Signature.compare(s1, s2, false));
 						}
 					}
 					// + template
@@ -168,7 +244,7 @@ public class OSVOMD_COMP
 					{
 						if (template.get(j) != null)
 						{
-							templateSameScores.add(Signature.compare(s, template.get(j)));
+							templateSameScores.add(Signature.compare(s, template.get(j), false));
 						}
 					}
 					
@@ -177,7 +253,7 @@ public class OSVOMD_COMP
 					{
 						for (Signature forge : forgery.get(j))
 						{
-							forgeryScores.add(Signature.compare(s1, forge));
+							forgeryScores.add(Signature.compare(forge, s1, false));
 						}
 					}
 					// + template
@@ -185,7 +261,7 @@ public class OSVOMD_COMP
 					{
 						if (template.get(j) != null)
 						{
-							templateForgeryScores.add(Signature.compare(f, template.get(j)));
+							templateForgeryScores.add(Signature.compare(f, template.get(j), false));
 						}
 					}
 				}
@@ -196,7 +272,7 @@ public class OSVOMD_COMP
 					{
 						for (Signature s2 : genuine.get(j))
 						{
-							otherScores.add(Signature.compare(s1, s2));
+							otherScores.add(Signature.compare(s1, s2, false));
 						}
 					}
 					//+ template
@@ -204,7 +280,7 @@ public class OSVOMD_COMP
 					{
 						if (template.get(j) != null)
 						{
-							templateOtherScores.add(Signature.compare(s, template.get(j)));
+							templateOtherScores.add(Signature.compare(s, template.get(j), false));
 						}
 					}
 				}
@@ -215,9 +291,18 @@ public class OSVOMD_COMP
 		writeToFile("other_"+getDate(), otherScores.toString().replace(", ", "\n").replace("[", "").replace("]", ""));
 		writeToFile("forgery_"+getDate(), forgeryScores.toString().replace(", ", "\n").replace("[", "").replace("]", ""));
 		
+		writeToFile("templateForgery_"+getDate(), templateForgeryScores.toString().replace(", ", "\n").replace("[", "").replace("]", ""));
+		writeToFile("templateSame_"+getDate(), templateSameScores.toString().replace(", ", "\n").replace("[", "").replace("]", ""));
+		writeToFile("templateOther_"+getDate(), templateOtherScores.toString().replace(", ", "\n").replace("[", "").replace("]", ""));
+
+		
 		writeToFile("sameHist_"+getDate(), histogram(sameScores, 0.01).toString());
 		writeToFile("otherHist_"+getDate(), histogram(otherScores, 0.01).toString());
 		writeToFile("forgeryHist_"+getDate(), histogram(forgeryScores, 0.01).toString());
+		
+		writeToFile("templateForgeryHist_"+getDate(), histogram(templateForgeryScores, 0.01).toString());
+		writeToFile("templateSameHist_"+getDate(), histogram(templateSameScores, 0.01).toString());
+		writeToFile("templateOtherHist_"+getDate(), histogram(templateOtherScores, 0.01).toString());
 
 		toRet += ("GEN ");
 		toRet += (stringEER(sameScores, otherScores)+" ");
@@ -236,7 +321,7 @@ public class OSVOMD_COMP
 		double FRR, FAR;
 		double prevD = 0;
 		double nextD = 0;
-		for (double d = Collections.min(otherScores); d < Collections.max(sameScores); d += 0.001)
+		for (double d = Collections.min(otherScores); d < Collections.max(sameScores); d += 0.0001)
 		{
 			FRR = 0;
 			FAR = 0;

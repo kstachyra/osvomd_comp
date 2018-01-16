@@ -114,7 +114,7 @@ public class Signature
      * @param entrollmentSignatures podpisy na podstawie których wybieramy
      * @return najlepszy podpis
      */
-    private static Signature pickBestSignature(List<Signature> hiddenSignatures, List<Signature> entrollmentSignatures)
+    public static Signature pickBestSignature(List<Signature> hiddenSignatures, List<Signature> entrollmentSignatures)
     {
         double[] worstScores = new double[hiddenSignatures.size()];
 
@@ -124,7 +124,7 @@ public class Signature
             for (Signature e : entrollmentSignatures)
             {
 
-                double newScore = new DTW<Point>(h.getPointArray(), e.getPointArray()).getWarpingDistance();
+                double newScore = Signature.compare(e, h, false);
                 if (newScore > worstScores[hidIdx]) worstScores[hidIdx] = newScore;
             }
             ++hidIdx;
@@ -140,7 +140,7 @@ public class Signature
                 pickIdx = i;
             }
         }
-        //System.out.println("pdi.kkk." + "wybrano podpis o inx " + pickIdx + "który mia³ najgorsz¹ wartoœæ jedynie " + bestScore);
+        System.out.println("pdi.kkk." + "wybrano podpis o inx " + pickIdx + "który mia³ najgorsz¹ wartoœæ jedynie " + bestScore);
         return hiddenSignatures.get(pickIdx);
     }
 
@@ -149,7 +149,7 @@ public class Signature
      * @param inHiddenTime lista podpisów zgodnie zmarszczonych
      * @return œredni podpis, null gdy ró¿ne czasy
      */
-    private static Signature averageSignature(final LinkedList<Signature> inHiddenTime)
+    public static Signature averageSignature(final LinkedList<Signature> inHiddenTime)
     {
         //spr czy równe d³ugosci podpisów
         int size = inHiddenTime.getFirst().points.size();
@@ -196,7 +196,7 @@ public class Signature
      * @param score zmienna, w której zapisywany jest wynik marszczenia
      * @return nowy zmarszczony podpis w czasie podpisu timeSig
      */
-    private Signature warpToTime(final Signature timeSig, double[] score)
+    public Signature warpToTime(final Signature timeSig, double[] score)
     {
         Signature newSig = new Signature();
 
@@ -254,31 +254,40 @@ public class Signature
      * @param template drugi podpis
      * @return comaprison value (more -> more different signatures)
      */
-    static public double compare(Signature veryfied, Signature template)
+    static public double compare(final Signature veryfied, final Signature template, boolean otherAproach)
     {
-        DTW<Point> dtw = new DTW<>(veryfied.getPointArray(), template.getPointArray());
+    	if (!otherAproach)
+    	{
+    		DTW<Point> dtw = new DTW<>(veryfied.getPointArray(), template.getPointArray());
 
-        double value = dtw.warpingDistance;
+    		double value = dtw.warpingDistance;
 
-        long timeDif = abs(veryfied.getSignatureTime() - template.getSignatureTime()) / template.getSignatureTime();
-        
-        if(timeDif > SIGNATURE_TIME_LIMIT)
-        {
-            value += (timeDif-SIGNATURE_TIME_LIMIT)*SIGNATURE_TIME_WEIGHT;
-        }
-        
-        //TODO ustalenie wyniku, wartoœci jakie wp³ywaj¹ na wynik porównania
-        return value;
+    		double timeDif = abs((double)veryfied.getSignatureTime() - (double)template.getSignatureTime()) / (double)template.getSignatureTime();
+
+    		if(timeDif > SIGNATURE_TIME_LIMIT)
+    		{
+    			value += timeDif*SIGNATURE_TIME_WEIGHT;
+    		}
+    		return value;
+    	}
+    	else
+    	{
+    		double value = Double.MAX_VALUE;
+    		
+    		//TODO other Aproach
+    		
+    		return value;
+    	}
     }
 
-    /**porównuje obecny podpis z podanym w parametrze
+    /**porównuje obecny podpis z podanym w parametrze klasyczn¹ metod¹
      *
      * @param other signature
      * @return omaprison value (more -> more different signatures)
      */
     public double compareTo(Signature other)
     {
-        return Signature.compare(this, other);
+        return Signature.compare(this, other, false);
     }
 
     /**dodaje punkt do podpisu*/
