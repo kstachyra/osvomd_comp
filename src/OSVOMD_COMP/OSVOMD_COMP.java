@@ -33,8 +33,8 @@ public class OSVOMD_COMP
 		ArrayList<Signature> template = new ArrayList<Signature>();
 		
 		//usuwa te wykorzystane do tworzenia wzorca!!!
-		//templateHidden(template, genuine1, genuine2, 10,  10, noSigners);
-		templateAverage(template, genuine1, genuine2, 10, noSigners);
+		templateHidden(template, genuine1, genuine2, 10,  10, noSigners);
+		//templateAverage(template, genuine1, genuine2, 10, noSigners);
 		//templateBest(template, genuine1, genuine2, 10, noSigners);
 
 		writeToFile("EER_"+getDate(), ERR(genuine1, genuine2, forgery, template, noSigners));
@@ -223,6 +223,8 @@ public class OSVOMD_COMP
 		List<Double> templateOtherScores = new LinkedList<>();
 		List<Double> templateForgeryScores = new LinkedList<>();
 
+		int over = 0;
+		int less = 0;
 		
 		for (int i=1; i<=noSigners; ++i)
 		{
@@ -310,6 +312,8 @@ public class OSVOMD_COMP
 		toRet += (stringEER(templateSameScores, templateOtherScores)+" ");
 		toRet += ("TEMPLATE_FORGE ");
 		toRet += (stringEER(templateSameScores, templateForgeryScores)+" ");
+		
+		System.out.println("OVER " + over + " LESS " + less);
 		
 		return toRet;
 	}
