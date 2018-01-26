@@ -409,7 +409,7 @@ public class Signature
 
     		if(timeDif > SIGNATURE_TIME_LIMIT)
     		{
-    			value += timeDif*SIGNATURE_TIME_WEIGHT;
+    			//value += timeDif*SIGNATURE_TIME_WEIGHT;
     		}
     		return value;
     	}

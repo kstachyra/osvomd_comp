@@ -22,7 +22,9 @@ public class OSVOMD_COMP
 	{
 		//54 -> 35 userów!
 		//25 -> 20 userów!
-		int noSigners = 25;
+		//34 -> 25 userów!
+		//120 -> 94 userów!
+		int noSigners = 120;
 
 		ArrayList<LinkedList<Signature>> genuine1 = new ArrayList<>();
 		ArrayList<LinkedList<Signature>> genuine2 = new ArrayList<>();
@@ -34,14 +36,53 @@ public class OSVOMD_COMP
 
 		//usuwa te wykorzystane do tworzenia wzorca!!! wy³¹cznie liczby parzyste
 		
-		templateHidden(template, HMode.MEDIAN, genuine1, genuine2, 10,  10, noSigners);
-		//templateAverage(template, genuine1, genuine2, 10, noSigners);
+		//templateHidden(template, HMode.AVERAGE, genuine1, genuine2, 10,  10, noSigners);
+		templateAverage(template, genuine1, genuine2, 10, noSigners);
 		//templateBest(template, genuine1, genuine2, 10, noSigners);
+		//nullTemplates(template, genuine1, genuine2, 10, noSigners);
 
 		writeToFile("EER_"+getDate(), ERR(genuine1, genuine2, forgery, template, noSigners));
 		System.out.println("OK!");
 
 		//generateScript();
+	}
+
+
+
+	private static void nullTemplates(ArrayList<Signature> template, ArrayList<LinkedList<Signature>> genuine1,
+			ArrayList<LinkedList<Signature>> genuine2, int noTemplate, int noSigners)
+	{
+		if (noTemplate > 20)
+		{
+			System.out.println("templateSusig.zla liczba podpisów > wzorzec!");
+			return;
+		}
+
+		noTemplate /= 2;
+
+		template.clear();
+		template.add(null);
+
+		for (int i=1; i<=noSigners; ++i)
+		{
+			LinkedList<Signature> signatures = new LinkedList<>();
+
+			Signature newTemplate = null;
+			if (!genuine1.get(i).isEmpty() && !genuine2.isEmpty())
+			{
+				for (int j=0; j<noTemplate; ++j)
+				{
+					signatures.add(genuine1.get(i).get(j));
+					signatures.add(genuine2.get(i).get(j));
+
+				}
+
+				newTemplate = null;
+			}
+			template.add(i, newTemplate);
+
+			signatures.clear();
+		}
 	}
 
 
