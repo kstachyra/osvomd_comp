@@ -116,6 +116,9 @@ public class Signature
      */
     public static Signature pickBestSignature(List<Signature> hiddenSignatures, List<Signature> entrollmentSignatures)
     {
+    	//jeden to on jest najlepszy
+    	if (hiddenSignatures.size() == 1) return hiddenSignatures.get(0);
+    	
         double[] worstScores = new double[hiddenSignatures.size()];
 
         int hidIdx = 0;
