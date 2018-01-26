@@ -115,7 +115,7 @@ public class Signature
             //nic siê ju¿ nie zmieni³o
             if (stop) break;
         }
-
+        
         template = pickBestSignature(hiddenSignatures, signatures);
         return template;
     }
@@ -155,7 +155,7 @@ public class Signature
                 pickIdx = i;
             }
         }
-        System.out.println("pdi.kkk." + "wybrano podpis o inx " + pickIdx + "który mia³ najgorsz¹ wartoœæ jedynie " + bestScore);
+        //System.out.println("pdi.kkk." + "wybrano podpis o inx " + pickIdx + "który mia³ najgorsz¹ wartoœæ jedynie " + bestScore);
         return hiddenSignatures.get(pickIdx);
     }
 
@@ -280,7 +280,7 @@ public class Signature
 		LinkedList<Signature> sameTimeSigs = new LinkedList<>();
 		for (Signature s : signatures)
 		{
-			sameTimeSigs.add(s.changeNoPoints(averagePoints));
+			sameTimeSigs.add(reparametrize(s, averagePoints, false));
 		}
 		
 		Signature firstTemplateAverage = Signature.averageSignature(sameTimeSigs);
@@ -288,11 +288,8 @@ public class Signature
 		return firstTemplateAverage;
 	}
 
-	private Signature changeNoPoints(long targetNoPoints)
+	private static Signature reparametrize(Signature orig, long targetNoPoints, boolean changeOriginal)
 	{
-		System.out.println("PRZED REPARAMETRYZACJA");
-		this.print();
-		
 		//reparametryzuje kopiê podpisu do okreœlonej liczby punktów
 		Signature newSig = new Signature();
 		
@@ -300,23 +297,23 @@ public class Signature
 		int prev = 0;
 		int next = 0;
 		
-		long timeStep = this.getSignatureTime() / (targetNoPoints - 1);
+		long timeStep = orig.getSignatureTime() / (targetNoPoints - 1);
 		long newPointTime = 0;
 		
 		for (int i=0; i<targetNoPoints; ++i)
 		{
-			while (this.points.get(next).time <= newPointTime && next!=this.points.size()-1)
+			while (orig.points.get(next).time <= newPointTime && next!=orig.points.size()-1)
 			{
 				++next;
 			}
 			if (next != 0) prev = next -1;
 			
-			double prevDist = newPointTime - this.points.get(prev).time;
-			double nextDist = this.points.get(next).time - newPointTime;
+			double prevDist = newPointTime - orig.points.get(prev).time;
+			double nextDist = orig.points.get(next).time - newPointTime;
 			double prop = prevDist / (prevDist + nextDist);
 			
-			Point prevP = this.points.get(prev);
-			Point nextP = this.points.get(next);
+			Point prevP = orig.points.get(prev);
+			Point nextP = orig.points.get(next);
 			
 			newSig.addPoint(newPointTime, prevP.x + prop*(nextP.x - prevP.x) , prevP.y + prop*(nextP.y - prevP.y),
 					prevP.press + prop*(nextP.press - prevP.press));
@@ -324,13 +321,11 @@ public class Signature
 			newPointTime += timeStep;
 		}
 		
-		System.out.println("PO REPARAMETRYZACJA ORYGINALNY");
-		this.print();
+		if(changeOriginal)
+		{
+			orig = newSig;
+		}
 		
-		System.out.println("PO REPARAMETRYZACJA NOWY");
-		newSig.print();
-		
-		// TODO Auto-generated method stub
 		return newSig;
 	}
 
@@ -344,6 +339,7 @@ public class Signature
 			Signature s = signatures.get(i);
 			if (s != null)
 			{
+				System.out.println(s.points.size() + " -> " + i);
 				pointsToIndex.add(new Pair<Integer, Integer>(s.points.size(), i));
 			}
 		}
@@ -372,9 +368,16 @@ public class Signature
 			pointsToIndex.add(new Pair<Integer, Integer>(0, -1));
 		}
 		
+		for (int i =0; i<pointsToIndex.size(); ++i)
+		{
+			System.out.println(pointsToIndex.get(i).getKey() + " -> " +pointsToIndex.get(i).getValue());
+		}
+		
 		//index podpisu mediany czasu
-		Integer pickedIndex = pointsToIndex.get((pointsToIndex.size() - 1) / 2).getValue() - 1;
+		Integer pickedIndex = pointsToIndex.get(((pointsToIndex.size() - 1) / 2) - 1).getValue();
 				
+		System.out.println("PICKED" + pickedIndex);
+		
 		Signature firstTemplateMedian = null;
 		if (pickedIndex != -1)
 		{
@@ -452,11 +455,14 @@ public class Signature
                 this.clearBeginEnd();
                 this.resize();
                 this.reTime();
+                this.rePress();
                 //System.out.println("pdi.signature" + "signature normalized");
             } else
             {
             	System.out.println("pdi.signature" + "can't normalize, !points.size > 0");
             }
+            
+            reparametrize(this, this.points.size(), true);
         }
         catch (Exception e)
         {
@@ -527,9 +533,8 @@ public class Signature
         }
     }
 
-    /*standaryzuje wartoœci nacisku od 0 d 1
-    * dla innych zestawów danych ni¿ przygotowane surowe na urz¹dzeniu*/
-    public void rePress()
+    /*standaryzuje wartoœci nacisku od 0 d 1*/
+    private void rePress()
     {
         //znajdŸ min i max wartoœci punktów
         double min = Double.MAX_VALUE;

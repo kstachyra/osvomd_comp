@@ -22,7 +22,7 @@ public class OSVOMD_COMP
 	{
 		//54 -> 35 userów!
 		//25 -> 20 userów!
-		int noSigners = 30;
+		int noSigners = 25;
 
 		ArrayList<LinkedList<Signature>> genuine1 = new ArrayList<>();
 		ArrayList<LinkedList<Signature>> genuine2 = new ArrayList<>();
@@ -33,7 +33,8 @@ public class OSVOMD_COMP
 		ArrayList<Signature> template = new ArrayList<Signature>();
 
 		//usuwa te wykorzystane do tworzenia wzorca!!! wy³¹cznie liczby parzyste
-		templateHidden(template, HMode.AVERAGE, genuine1, genuine2, 10,  10, noSigners);
+		
+		templateHidden(template, HMode.MEDIAN, genuine1, genuine2, 10,  10, noSigners);
 		//templateAverage(template, genuine1, genuine2, 10, noSigners);
 		//templateBest(template, genuine1, genuine2, 10, noSigners);
 
@@ -125,7 +126,7 @@ public class OSVOMD_COMP
 				}
 			}
 
-
+			
 			Signature newTemplate = Signature.templateSignature(signatures, firstTemplate, maxIterations);
 			template.add(i, newTemplate);
 
@@ -133,7 +134,6 @@ public class OSVOMD_COMP
 			genuine2.get(i).removeAll(signatures);
 
 			signatures.clear();
-
 		}
 	}
 
@@ -603,8 +603,6 @@ public class OSVOMD_COMP
 		}
 		newSig.setID(filename);
 		newSig.normalize();
-		newSig.rePress();
-
 		return newSig;
 	}
 
@@ -673,7 +671,6 @@ public class OSVOMD_COMP
 		}
 		newSig.setID(filename);
 		newSig.normalize();
-		newSig.rePress();
 		return newSig;
 	}
 
