@@ -33,7 +33,7 @@ public class OSVOMD_COMP
 		ArrayList<Signature> template = new ArrayList<Signature>();
 
 		//usuwa te wykorzystane do tworzenia wzorca!!! wy³¹cznie liczby parzyste
-		templateHidden(template, HMode.MEDIAN, genuine1, genuine2, 10,  10, noSigners);
+		templateHidden(template, HMode.AVERAGE, genuine1, genuine2, 10,  10, noSigners);
 		//templateAverage(template, genuine1, genuine2, 10, noSigners);
 		//templateBest(template, genuine1, genuine2, 10, noSigners);
 

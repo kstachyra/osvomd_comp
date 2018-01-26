@@ -28,13 +28,13 @@ public class Signature
     public Signature()
     {
         this.name = rename();
-        this.points = new LinkedList<Point>();
+        this.points = new ArrayList<Point>();
     }
 
     public Signature (byte[] b)
     {
         this.name = rename();
-        this.points = new LinkedList<Point>();
+        this.points = new ArrayList<Point>();
 
         getDataFromBytes(b);
     }
@@ -268,12 +268,14 @@ public class Signature
 	{
 		//wylicza œredni czas i reparametryzuje podpisy do tego czasu, potem uœrednia
 		int averagePoints = 0;
+		int noSigs = 0;
 		for (Signature s : signatures)
 		{
-			averagePoints =+ s.points.size();
+			averagePoints += s.points.size();
+			++noSigs;
 		}
-		averagePoints = averagePoints / signatures.size();
-		
+		averagePoints = averagePoints / noSigs;
+				
 		//nowa lista zmienionych w czasie
 		LinkedList<Signature> sameTimeSigs = new LinkedList<>();
 		for (Signature s : signatures)
@@ -286,11 +288,50 @@ public class Signature
 		return firstTemplateAverage;
 	}
 
-	private Signature changeNoPoints(long averagePoints)
+	private Signature changeNoPoints(long targetNoPoints)
 	{
-		//reparametryzuje podpis to okreœlonej liczby punktów
+		System.out.println("PRZED REPARAMETRYZACJA");
+		this.print();
+		
+		//reparametryzuje kopiê podpisu do okreœlonej liczby punktów
+		Signature newSig = new Signature();
+		
+		//indeksy punktów oryginalnego
+		int prev = 0;
+		int next = 0;
+		
+		long timeStep = this.getSignatureTime() / (targetNoPoints - 1);
+		long newPointTime = 0;
+		
+		for (int i=0; i<targetNoPoints; ++i)
+		{
+			while (this.points.get(next).time <= newPointTime && next!=this.points.size()-1)
+			{
+				++next;
+			}
+			if (next != 0) prev = next -1;
+			
+			double prevDist = newPointTime - this.points.get(prev).time;
+			double nextDist = this.points.get(next).time - newPointTime;
+			double prop = prevDist / (prevDist + nextDist);
+			
+			Point prevP = this.points.get(prev);
+			Point nextP = this.points.get(next);
+			
+			newSig.addPoint(newPointTime, prevP.x + prop*(nextP.x - prevP.x) , prevP.y + prop*(nextP.y - prevP.y),
+					prevP.press + prop*(nextP.press - prevP.press));
+		
+			newPointTime += timeStep;
+		}
+		
+		System.out.println("PO REPARAMETRYZACJA ORYGINALNY");
+		this.print();
+		
+		System.out.println("PO REPARAMETRYZACJA NOWY");
+		newSig.print();
+		
 		// TODO Auto-generated method stub
-		return null;
+		return newSig;
 	}
 
 	/** tworzy jeden pocz¹tkowy podpis, bêd¹cy podpisem z puli o czasie trwania, który jest median¹ czaasów*/
@@ -393,6 +434,12 @@ public class Signature
     public void addPoint(long time, double x, double y, double press)
     {
         points.add(new Point(time, x, y, press));
+    }
+    
+    /**dodaje punkt do podpisu*/
+    public void addPoint(Point p)
+    {
+        points.add(p);
     }
 
     /*przekszta³ca surowy zbiór punktów na znormalizowany*/
@@ -553,7 +600,7 @@ public class Signature
     {
         for (Point p : points)
         {
-            System.out.println("pdi.signature." + p.toString());
+            System.out.println("pdi.signature.\t" + p.toString());
         }
     }
 
