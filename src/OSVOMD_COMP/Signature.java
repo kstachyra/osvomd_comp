@@ -4,9 +4,13 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+
+import javafx.util.Pair;
 
 import static java.lang.Math.abs;
 import static OSVOMD_COMP.Constants.SIGNATURE_TIME_LIMIT;
@@ -51,30 +55,38 @@ public class Signature
     /**z listy podpisów tworzy jeden wzorzec
      * IPPA algorithm
      * @param signatures enrollment signatures
+     * @param firstTemaplte first sginature for calculating
      * @return templateSignature
      */
-    static public Signature templateSignature(List<Signature> signatures, int maxInterations)
+    static public Signature templateSignature(List<Signature> signatures, Signature firstTemplate, int maxInterations)
     {
     	if (signatures.isEmpty())
     	{
     		return null;
     	}
-    	
-        Signature template = new Signature();
 
-        //kopia listy signatures
-        List<Signature> hiddenSignatures = new LinkedList<Signature>();
-        for (Signature s : signatures)
-        {
-            hiddenSignatures.add(new Signature(s));
-        }
+    	Signature template = new Signature();
 
-        //macierz sprawdzania warunku stopu, przechowuje informacje o poprzednich wynikach marszczenia
-        double[][] prevScores = new double[signatures.size()][hiddenSignatures.size()];
-        //w celu unikniêcia "oscylacji", sprawdzamy te¿ wyniki dwa kroki przed
-        double[][] prevPrevScores = new double[signatures.size()][hiddenSignatures.size()];
-        //warunek stopu
-        boolean stop = false;
+		List<Signature> hiddenSignatures = new LinkedList<Signature>();
+    	if (firstTemplate == null)
+    	{
+    		//kopia listy signatures
+    		for (Signature s : signatures)
+    		{
+    			hiddenSignatures.add(new Signature(s));
+    		}
+    	}
+    	else //istnieje jeden podpis pocz¹tkowy
+    	{
+    		hiddenSignatures.add(firstTemplate);
+    	}
+
+    	//macierz sprawdzania warunku stopu, przechowuje informacje o poprzednich wynikach marszczenia
+    	double[][] prevScores = new double[signatures.size()][hiddenSignatures.size()];
+    	//w celu unikniêcia "oscylacji", sprawdzamy te¿ wyniki dwa kroki przed
+    	double[][] prevPrevScores = new double[signatures.size()][hiddenSignatures.size()];
+    	//warunek stopu
+    	boolean stop = false;
         for (int i=0; i<maxInterations; ++i)
         {
             stop = true;
@@ -98,7 +110,7 @@ public class Signature
                 newHidden.add(averageSignature(inHiddenTime));
                 ++hidIdx;
             }
-            hiddenSignatures = newHidden;
+            hiddenSignatures = newHidden; //mo¿e byæ jeden tylko, w odpowiednich trybach
 
             //nic siê ju¿ nie zmieni³o
             if (stop) break;
@@ -250,6 +262,90 @@ public class Signature
         }
         return newSig;
     }
+    
+    /** tworzy jeden pocz¹tkowy podpis, bêd¹cy œrednim podpisem, o œrednim czasie trwania*/
+	public static Signature firstTemplateAverage(final LinkedList<Signature> signatures)
+	{
+		//wylicza œredni czas i reparametryzuje podpisy do tego czasu, potem uœrednia
+		int averagePoints = 0;
+		for (Signature s : signatures)
+		{
+			averagePoints =+ s.points.size();
+		}
+		averagePoints = averagePoints / signatures.size();
+		
+		//nowa lista zmienionych w czasie
+		LinkedList<Signature> sameTimeSigs = new LinkedList<>();
+		for (Signature s : signatures)
+		{
+			sameTimeSigs.add(s.changeNoPoints(averagePoints));
+		}
+		
+		Signature firstTemplateAverage = Signature.averageSignature(sameTimeSigs);
+
+		return firstTemplateAverage;
+	}
+
+	private Signature changeNoPoints(long averagePoints)
+	{
+		//reparametryzuje podpis to okreœlonej liczby punktów
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/** tworzy jeden pocz¹tkowy podpis, bêd¹cy podpisem z puli o czasie trwania, który jest median¹ czaasów*/
+	public static Signature firstTemplateMedian(LinkedList<Signature> signatures)
+	{
+		//dla wszystkich podpisów, wybiera ten o czasie bêd¹cym median¹ wszystkich czasów
+		LinkedList<Pair<Integer, Integer>> pointsToIndex = new LinkedList<>();
+		for (int i=0; i<signatures.size(); ++i)
+		{
+			Signature s = signatures.get(i);
+			if (s != null)
+			{
+				pointsToIndex.add(new Pair<Integer, Integer>(s.points.size(), i));
+			}
+		}
+		
+		Collections.sort(pointsToIndex, new Comparator<Pair<Integer, Integer>>()
+		{
+			@Override
+			public int compare(Pair<Integer, Integer> arg0, Pair<Integer, Integer> arg1)
+			{
+				if (arg0.getKey() > arg1.getKey())
+				{
+					return 1;
+				}
+				else if (arg0.getKey() < arg1.getKey())
+				{
+					return -1;
+				}
+				
+				return 0;
+			}
+		});
+		
+		//do parzystych list dodajemy na koñcu cokolwiek
+		if (pointsToIndex.size() %2 == 0)
+		{
+			pointsToIndex.add(new Pair<Integer, Integer>(0, -1));
+		}
+		
+		//index podpisu mediany czasu
+		Integer pickedIndex = pointsToIndex.get((pointsToIndex.size() - 1) / 2).getValue() - 1;
+				
+		Signature firstTemplateMedian = null;
+		if (pickedIndex != -1)
+		{
+			firstTemplateMedian = new Signature(signatures.get(pickedIndex));
+		}
+		else
+		{
+			System.out.println("ERROR firstTemplateMedian!");
+		}
+		
+		return firstTemplateMedian;
+	}
 
     /**porównuje dwa podpisy
      *
