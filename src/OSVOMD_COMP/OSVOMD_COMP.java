@@ -33,15 +33,38 @@ public class OSVOMD_COMP
 		loadAllSUSig(genuine1, genuine2, forgery, noSigners);
 
 		ArrayList<Signature> template = new ArrayList<Signature>();
+		
+		ArrayList<Signature> templateAverage = new ArrayList<Signature>();
+		
+		ArrayList<Signature> templateAll = new ArrayList<Signature>();
 
 		//usuwa te wykorzystane do tworzenia wzorca!!! wy³¹cznie liczby parzyste
 		
-		//templateHidden(template, HMode.AVERAGE, genuine1, genuine2, 10,  10, noSigners);
+		templateHidden(templateAll, HMode.ALL, genuine1, genuine2, 10,  10, noSigners);
+		
+		templateHidden(templateAverage, HMode.AVERAGE, genuine1, genuine2, 10,  10, noSigners);
+		
 		templateAverage(template, genuine1, genuine2, 10, noSigners);
 		//templateBest(template, genuine1, genuine2, 10, noSigners);
 		//nullTemplates(template, genuine1, genuine2, 10, noSigners);
 
-		writeToFile("EER_"+getDate(), ERR(genuine1, genuine2, forgery, template, noSigners));
+		//writeToFile("EER_"+getDate(), ERR(genuine1, genuine2, forgery, template, noSigners));
+		
+		
+		System.out.println("srX" + "\t" + "srY" + "\t" + "srP" + "\t" + "maxX" + "\t" + "maxY" + "\t" + 
+				"maxP" + "\t" + "varX" + "\t" + "varY" + "\t" + "varP");
+		for (int i=0; i<noSigners; ++i)
+		{
+			if (templateAll.get(i) != null & templateAverage.get(i) != null)
+			{
+				Signature sig1 = templateAll.get(i);
+				Signature sig2 = templateAverage.get(i);
+				
+				System.out.println(Signature.linearCompare(sig1, sig2));
+			}
+		}
+		
+		
 		System.out.println("OK!");
 
 		//generateScript();
@@ -171,8 +194,8 @@ public class OSVOMD_COMP
 			Signature newTemplate = Signature.templateSignature(signatures, firstTemplate, maxIterations);
 			template.add(i, newTemplate);
 
-			genuine1.get(i).removeAll(signatures);
-			genuine2.get(i).removeAll(signatures);
+			//genuine1.get(i).removeAll(signatures);
+			//genuine2.get(i).removeAll(signatures);
 
 			signatures.clear();
 		}

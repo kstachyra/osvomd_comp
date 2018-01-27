@@ -310,7 +310,9 @@ public class Signature
 			
 			double prevDist = newPointTime - orig.points.get(prev).time;
 			double nextDist = orig.points.get(next).time - newPointTime;
-			double prop = prevDist / (prevDist + nextDist);
+			
+			double prop = 0;
+			if(prevDist + nextDist > 0) prop = prevDist / (prevDist + nextDist);
 			
 			Point prevP = orig.points.get(prev);
 			Point nextP = orig.points.get(next);
@@ -409,7 +411,7 @@ public class Signature
 
     		if(timeDif > SIGNATURE_TIME_LIMIT)
     		{
-    			//value += timeDif*SIGNATURE_TIME_WEIGHT;
+    			value += timeDif*SIGNATURE_TIME_WEIGHT;
     		}
     		return value;
     	}
@@ -626,4 +628,50 @@ public class Signature
         this.ID = id;
         rename();
     }
+
+    
+	public static String linearCompare(Signature sig1, Signature sig2)
+	{
+		Signature temp = Signature.reparametrize(sig1, sig2.points.size(), false);
+		
+		
+		
+		double maxX = 0, maxY = 0, maxPress = 0;
+		double varX = 0, varY = 0, varPress = 0;
+		
+		double X = 0, Y=0, press=0;
+		for (int i=0; i<temp.points.size(); ++i)
+		{
+			if (Math.abs(temp.points.get(i).x - sig2.points.get(i).x) > maxX)
+				maxX = Math.abs(temp.points.get(i).x - sig2.points.get(i).x);
+			
+			if (Math.abs(temp.points.get(i).y - sig2.points.get(i).y) > maxY)
+				maxY = Math.abs(temp.points.get(i).y - sig2.points.get(i).y);
+			
+			if (Math.abs(temp.points.get(i).press - sig2.points.get(i).press) > maxPress)
+				maxPress = Math.abs(temp.points.get(i).press - sig2.points.get(i).press);
+			
+			X += Math.abs(temp.points.get(i).x - sig2.points.get(i).x);
+			Y += Math.abs(temp.points.get(i).y - sig2.points.get(i).y);
+			press += Math.abs(temp.points.get(i).press - sig2.points.get(i).press);
+		}
+		X /= temp.points.size();
+		Y /= temp.points.size();
+		press /= temp.points.size();
+		
+		for (int i=0; i<temp.points.size(); ++i)
+		{
+			varX += Math.pow((Math.abs(temp.points.get(i).x - sig2.points.get(i).x)) - X, 2);
+			varY += Math.pow((Math.abs(temp.points.get(i).y - sig2.points.get(i).y)) - Y, 2);
+			varPress += Math.pow((Math.abs(temp.points.get(i).press - sig2.points.get(i).press)) - press, 2);
+		}
+		
+		varX /= temp.points.size();
+		varY /= temp.points.size();
+		varPress /= temp.points.size();
+		
+		return X + "\t" + Y + "\t" + press + "\t" + maxX + "\t" + maxY + "\t" + maxPress + "\t" + varX + "\t" + varY + "\t" + varPress;
+	}
 }
+
+
