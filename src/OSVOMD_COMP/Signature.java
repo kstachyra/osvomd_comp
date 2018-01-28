@@ -288,49 +288,6 @@ public class Signature
 		return firstTemplateAverage;
 	}
 
-	private static Signature reparametrize(Signature orig, long targetNoPoints, boolean changeOriginal)
-	{
-		//reparametryzuje kopiê podpisu do okreœlonej liczby punktów
-		Signature newSig = new Signature();
-		
-		//indeksy punktów oryginalnego
-		int prev = 0;
-		int next = 0;
-		
-		long timeStep = orig.getSignatureTime() / (targetNoPoints - 1);
-		long newPointTime = 0;
-		
-		for (int i=0; i<targetNoPoints; ++i)
-		{
-			while (orig.points.get(next).time <= newPointTime && next!=orig.points.size()-1)
-			{
-				++next;
-			}
-			if (next != 0) prev = next -1;
-			
-			double prevDist = newPointTime - orig.points.get(prev).time;
-			double nextDist = orig.points.get(next).time - newPointTime;
-			
-			double prop = 0;
-			if(prevDist + nextDist > 0) prop = prevDist / (prevDist + nextDist);
-			
-			Point prevP = orig.points.get(prev);
-			Point nextP = orig.points.get(next);
-			
-			newSig.addPoint(newPointTime, prevP.x + prop*(nextP.x - prevP.x) , prevP.y + prop*(nextP.y - prevP.y),
-					prevP.press + prop*(nextP.press - prevP.press));
-		
-			newPointTime += timeStep;
-		}
-		
-		if(changeOriginal)
-		{
-			orig = newSig;
-		}
-		
-		return newSig;
-	}
-
 	/** tworzy jeden pocz¹tkowy podpis, bêd¹cy podpisem z puli o czasie trwania, który jest median¹ czaasów*/
 	public static Signature firstTemplateMedian(LinkedList<Signature> signatures)
 	{
@@ -435,7 +392,57 @@ public class Signature
         return Signature.compare(this, other, false);
     }
 
-    /**dodaje punkt do podpisu*/
+    public static String linearCompare(Signature sig1, Signature sig2)
+	{
+		Signature temp = Signature.reparametrize(sig1, sig2.points.size(), false);
+		
+		
+		
+		double maxX = 0, maxY = 0, maxPress = 0;
+		double varX = 0, varY = 0, varPress = 0;
+		
+		double X = 0, Y=0, press=0;
+		for (int i=0; i<temp.points.size(); ++i)
+		{
+			if (Math.abs(temp.points.get(i).x - sig2.points.get(i).x) > maxX)
+				maxX = Math.abs(temp.points.get(i).x - sig2.points.get(i).x);
+			
+			if (Math.abs(temp.points.get(i).y - sig2.points.get(i).y) > maxY)
+				maxY = Math.abs(temp.points.get(i).y - sig2.points.get(i).y);
+			
+			if (Math.abs(temp.points.get(i).press - sig2.points.get(i).press) > maxPress)
+				maxPress = Math.abs(temp.points.get(i).press - sig2.points.get(i).press);
+			
+			X += Math.abs(temp.points.get(i).x - sig2.points.get(i).x);
+			Y += Math.abs(temp.points.get(i).y - sig2.points.get(i).y);
+			press += Math.abs(temp.points.get(i).press - sig2.points.get(i).press);
+		}
+		X /= temp.points.size();
+		Y /= temp.points.size();
+		press /= temp.points.size();
+		
+		for (int i=0; i<temp.points.size(); ++i)
+		{
+			varX += Math.pow((Math.abs(temp.points.get(i).x - sig2.points.get(i).x)) - X, 2);
+			varY += Math.pow((Math.abs(temp.points.get(i).y - sig2.points.get(i).y)) - Y, 2);
+			varPress += Math.pow((Math.abs(temp.points.get(i).press - sig2.points.get(i).press)) - press, 2);
+		}
+		
+		varX /= temp.points.size();
+		varY /= temp.points.size();
+		varPress /= temp.points.size();
+		
+		return X + "\t" + Y + "\t" + press + "\t" + maxX + "\t" + maxY + "\t" + maxPress + "\t" + varX + "\t" + varY + "\t" + varPress;
+	}
+
+	public static String linearDTWComapre(Signature sig1, Signature sig2)
+	{
+		Signature temp = Signature.reparametrize(sig1, sig2.points.size(), false);
+		
+		return String.valueOf(temp.compareTo(sig2));
+	}
+
+	/**dodaje punkt do podpisu*/
     public void addPoint(long time, double x, double y, double press)
     {
         points.add(new Point(time, x, y, press));
@@ -472,7 +479,54 @@ public class Signature
         }
     }
 
-    /*zwraca podpis jako pojedynczy string*/
+    /*zeruje obecny podpis, uaktualnia datê w nazwie*/
+	public void clear()
+	{
+	    try
+	    {
+	        rename();
+	        points.clear();
+	    }
+	    catch (Exception e)
+	    {
+	        e.printStackTrace();
+	    }
+	}
+
+	/*zwraca podpis jako ci¹g bajtów*/
+	public byte[] getSigBytes()
+	{
+	    return this.getSigString().getBytes(StandardCharsets.UTF_8);
+	}
+
+	/*wyœwietla w Log listê punktów podpisu*/
+	public void print()
+	{
+	    for (Point p : points)
+	    {
+	        System.out.println("pdi.signature.\t" + p.toString());
+	    }
+	}
+
+	/**zwraca tablice Point[] punktów podpisu*/
+	public Point[] getPointArray()
+	{
+	    return points.toArray(new Point[0]);
+	}
+
+	/**zwraca czas trwania podpisu*/
+	public long getSignatureTime()
+	{
+	    return points.get(points.size()-1).time;
+	}
+
+	public void setID(String id)
+	{
+	    this.ID = id;
+	    rename();
+	}
+
+	/*zwraca podpis jako pojedynczy string*/
     private String getSigString()
     {
         String sigString = "";
@@ -567,27 +621,50 @@ public class Signature
         return stringDate;
     }
 
-    /*zeruje obecny podpis, uaktualnia datê w nazwie*/
-    public void clear()
-    {
-        try
-        {
-            rename();
-            points.clear();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
+    private static Signature reparametrize(Signature orig, long targetNoPoints, boolean changeOriginal)
+	{
+		//reparametryzuje kopiê podpisu do okreœlonej liczby punktów
+		Signature newSig = new Signature();
+		
+		//indeksy punktów oryginalnego
+		int prev = 0;
+		int next = 0;
+		
+		long timeStep = orig.getSignatureTime() / (targetNoPoints - 1);
+		long newPointTime = 0;
+		
+		for (int i=0; i<targetNoPoints; ++i)
+		{
+			while (orig.points.get(next).time <= newPointTime && next!=orig.points.size()-1)
+			{
+				++next;
+			}
+			if (next != 0) prev = next -1;
+			
+			double prevDist = newPointTime - orig.points.get(prev).time;
+			double nextDist = orig.points.get(next).time - newPointTime;
+			
+			double prop = 0;
+			if(prevDist + nextDist > 0) prop = prevDist / (prevDist + nextDist);
+			
+			Point prevP = orig.points.get(prev);
+			Point nextP = orig.points.get(next);
+			
+			newSig.addPoint(newPointTime, prevP.x + prop*(nextP.x - prevP.x) , prevP.y + prop*(nextP.y - prevP.y),
+					prevP.press + prop*(nextP.press - prevP.press));
+		
+			newPointTime += timeStep;
+		}
+		
+		if(changeOriginal)
+		{
+			orig = newSig;
+		}
+		
+		return newSig;
+	}
 
-    /*zwraca podpis jako ci¹g bajtów*/
-    public byte[] getSigBytes()
-    {
-        return this.getSigString().getBytes(StandardCharsets.UTF_8);
-    }
-
-    /*ustawia punkty podpisu na podstawie danych z tablicy bajtów (zgodnie z getSigBytes*/
+	/*ustawia punkty podpisu na podstawie danych z tablicy bajtów (zgodnie z getSigBytes*/
     private void getDataFromBytes(byte[] b)
     {
         String sigString = new String(b, StandardCharsets.UTF_8);
@@ -601,77 +678,6 @@ public class Signature
             }
         }
     }
-
-    /*wyœwietla w Log listê punktów podpisu*/
-    public void print()
-    {
-        for (Point p : points)
-        {
-            System.out.println("pdi.signature.\t" + p.toString());
-        }
-    }
-
-    /**zwraca tablice Point[] punktów podpisu*/
-    public Point[] getPointArray()
-    {
-        return points.toArray(new Point[0]);
-    }
-
-    /**zwraca czas trwania podpisu*/
-    public long getSignatureTime()
-    {
-        return points.get(points.size()-1).time;
-    }
-
-    public void setID(String id)
-    {
-        this.ID = id;
-        rename();
-    }
-
-    
-	public static String linearCompare(Signature sig1, Signature sig2)
-	{
-		Signature temp = Signature.reparametrize(sig1, sig2.points.size(), false);
-		
-		
-		
-		double maxX = 0, maxY = 0, maxPress = 0;
-		double varX = 0, varY = 0, varPress = 0;
-		
-		double X = 0, Y=0, press=0;
-		for (int i=0; i<temp.points.size(); ++i)
-		{
-			if (Math.abs(temp.points.get(i).x - sig2.points.get(i).x) > maxX)
-				maxX = Math.abs(temp.points.get(i).x - sig2.points.get(i).x);
-			
-			if (Math.abs(temp.points.get(i).y - sig2.points.get(i).y) > maxY)
-				maxY = Math.abs(temp.points.get(i).y - sig2.points.get(i).y);
-			
-			if (Math.abs(temp.points.get(i).press - sig2.points.get(i).press) > maxPress)
-				maxPress = Math.abs(temp.points.get(i).press - sig2.points.get(i).press);
-			
-			X += Math.abs(temp.points.get(i).x - sig2.points.get(i).x);
-			Y += Math.abs(temp.points.get(i).y - sig2.points.get(i).y);
-			press += Math.abs(temp.points.get(i).press - sig2.points.get(i).press);
-		}
-		X /= temp.points.size();
-		Y /= temp.points.size();
-		press /= temp.points.size();
-		
-		for (int i=0; i<temp.points.size(); ++i)
-		{
-			varX += Math.pow((Math.abs(temp.points.get(i).x - sig2.points.get(i).x)) - X, 2);
-			varY += Math.pow((Math.abs(temp.points.get(i).y - sig2.points.get(i).y)) - Y, 2);
-			varPress += Math.pow((Math.abs(temp.points.get(i).press - sig2.points.get(i).press)) - press, 2);
-		}
-		
-		varX /= temp.points.size();
-		varY /= temp.points.size();
-		varPress /= temp.points.size();
-		
-		return X + "\t" + Y + "\t" + press + "\t" + maxX + "\t" + maxY + "\t" + maxPress + "\t" + varX + "\t" + varY + "\t" + varPress;
-	}
 }
 
 

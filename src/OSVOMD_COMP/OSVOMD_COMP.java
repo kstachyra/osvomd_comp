@@ -51,8 +51,6 @@ public class OSVOMD_COMP
 		//writeToFile("EER_"+getDate(), ERR(genuine1, genuine2, forgery, template, noSigners));
 		
 		
-		System.out.println("srX" + "\t" + "srY" + "\t" + "srP" + "\t" + "maxX" + "\t" + "maxY" + "\t" + 
-				"maxP" + "\t" + "varX" + "\t" + "varY" + "\t" + "varP");
 		for (int i=0; i<noSigners; ++i)
 		{
 			if (templateAll.get(i) != null & templateAverage.get(i) != null)
@@ -60,7 +58,9 @@ public class OSVOMD_COMP
 				Signature sig1 = templateAll.get(i);
 				Signature sig2 = templateAverage.get(i);
 				
-				System.out.println(Signature.linearCompare(sig1, sig2));
+				System.out.println(Signature.linearDTWComapre(sig1, sig2));
+				
+				//System.out.println(Signature.linearCompare(sig1, sig2));
 			}
 		}
 		
@@ -70,63 +70,45 @@ public class OSVOMD_COMP
 		//generateScript();
 	}
 
-
-
-	private static void nullTemplates(ArrayList<Signature> template, ArrayList<LinkedList<Signature>> genuine1,
-			ArrayList<LinkedList<Signature>> genuine2, int noTemplate, int noSigners)
+	/** ³aduje okreœlon¹ liczbê podpisów do struktur*/
+	private static void loadAllSUSig(ArrayList<LinkedList<Signature>> genuine1, ArrayList<LinkedList<Signature>> genuine2,
+			ArrayList<LinkedList<Signature>> forgery, int noSigners)
 	{
-		if (noTemplate > 20)
-		{
-			System.out.println("templateSusig.zla liczba podpisów > wzorzec!");
-			return;
-		}
-
-		noTemplate /= 2;
-
-		template.clear();
-		template.add(null);
-
+		genuine1.add(0, new LinkedList<Signature>());
 		for (int i=1; i<=noSigners; ++i)
 		{
-			LinkedList<Signature> signatures = new LinkedList<>();
-
-			Signature newTemplate = null;
-			if (!genuine1.get(i).isEmpty() && !genuine2.isEmpty())
+			genuine1.add(i, new LinkedList<Signature>());
+			for (int j=1; j<=10; ++j)
 			{
-				for (int j=0; j<noTemplate; ++j)
-				{
-					signatures.add(genuine1.get(i).get(j));
-					signatures.add(genuine2.get(i).get(j));
-
-				}
-
-				newTemplate = null;
+				String filename = String.format("%03d", i) + "_1_" + j + ".sig";
+				Signature s = loadSUSigFile(filename);
+				if (s!= null) genuine1.get(i).add(s);
 			}
-			template.add(i, newTemplate);
-
-			signatures.clear();
 		}
-	}
-
-
-
-	private static void generateScript()
-	{
-		String turboString = "";
-		for (Constants.X_W = 0.7; Constants.X_W <= 0.9; Constants.X_W += 0.1) //3
+	
+		genuine2.add(0, new LinkedList<Signature>());
+		for (int i=1; i<=noSigners; ++i)
 		{
-			for (Constants.Y_W = 1.0; Constants.Y_W <= 2.0; Constants.Y_W += 0.2) //6
+			genuine2.add(i, new LinkedList<Signature>());
+			for (int j=1; j<=10; ++j)
 			{
-				for (Constants.P_W = 0.3; Constants.P_W <= 0.6; Constants.P_W += 0.1) //4
-				{
-					turboString += "java -jar .\\OSVOMD_C.jar " + Constants.X_W + " " + Constants.Y_W + " " + Constants.P_W + " " + Constants.T_W + " && ";
-				}
+				String filename = String.format("%03d", i) + "_2_" + j + ".sig";
+				Signature s = loadSUSigFile(filename);
+				if (s!= null) genuine2.get(i).add(s);
 			}
 		}
-		turboString += "dir";
-
-		writeToFile("SCRIPT", turboString);
-		System.out.println(turboString);
+	
+		forgery.add(0, new LinkedList<Signature>());
+		for (int i=1; i<=noSigners; ++i)
+		{
+			forgery.add(i, new LinkedList<Signature>());
+			for (int j=1; j<=10; ++j)
+			{
+				String filename = String.format("%03d", i) + "_f_" + j + ".sig";
+				Signature s = loadSUSigFile(filename);
+				if (s!= null) forgery.get(i).add(s);
+			}
+		}
 	}
 
 	/**
@@ -194,8 +176,8 @@ public class OSVOMD_COMP
 			Signature newTemplate = Signature.templateSignature(signatures, firstTemplate, maxIterations);
 			template.add(i, newTemplate);
 
-			//genuine1.get(i).removeAll(signatures);
-			//genuine2.get(i).removeAll(signatures);
+			genuine1.get(i).removeAll(signatures);
+			genuine2.get(i).removeAll(signatures);
 
 			signatures.clear();
 		}
@@ -288,6 +270,42 @@ public class OSVOMD_COMP
 
 			signatures.clear();
 		}	
+	}
+
+	private static void nullTemplates(ArrayList<Signature> template, ArrayList<LinkedList<Signature>> genuine1,
+			ArrayList<LinkedList<Signature>> genuine2, int noTemplate, int noSigners)
+	{
+		if (noTemplate > 20)
+		{
+			System.out.println("templateSusig.zla liczba podpisów > wzorzec!");
+			return;
+		}
+	
+		noTemplate /= 2;
+	
+		template.clear();
+		template.add(null);
+	
+		/*for (int i=1; i<=noSigners; ++i)
+		{
+			LinkedList<Signature> signatures = new LinkedList<>();
+	
+			Signature newTemplate = null;
+			if (!genuine1.get(i).isEmpty() && !genuine2.isEmpty())
+			{
+				for (int j=0; j<noTemplate; ++j)
+				{
+					signatures.add(genuine1.get(i).get(j));
+					signatures.add(genuine2.get(i).get(j));
+	
+				}
+	
+				newTemplate = null;
+			}
+			template.add(i, newTemplate);
+	
+			signatures.clear();
+		}*/
 	}
 
 	private static String ERR(final ArrayList<LinkedList<Signature>> genuine1, final ArrayList<LinkedList<Signature>> genuine2,
@@ -498,47 +516,11 @@ public class OSVOMD_COMP
 		return result;	
 	}
 
-	/** ³aduje okreœlon¹ liczbê podpisów do struktur*/
-	private static void loadAllSUSig(ArrayList<LinkedList<Signature>> genuine1, ArrayList<LinkedList<Signature>> genuine2,
-			ArrayList<LinkedList<Signature>> forgery, int noSigners)
+	private static File getFilePath()
 	{
-		genuine1.add(0, new LinkedList<Signature>());
-		for (int i=1; i<=noSigners; ++i)
-		{
-			genuine1.add(i, new LinkedList<Signature>());
-			for (int j=1; j<=10; ++j)
-			{
-				String filename = String.format("%03d", i) + "_1_" + j + ".sig";
-				Signature s = loadSUSigFile(filename);
-				if (s!= null) genuine1.get(i).add(s);
-			}
-		}
-
-		genuine2.add(0, new LinkedList<Signature>());
-		for (int i=1; i<=noSigners; ++i)
-		{
-			genuine2.add(i, new LinkedList<Signature>());
-			for (int j=1; j<=10; ++j)
-			{
-				String filename = String.format("%03d", i) + "_2_" + j + ".sig";
-				Signature s = loadSUSigFile(filename);
-				if (s!= null) genuine2.get(i).add(s);
-			}
-		}
-
-		forgery.add(0, new LinkedList<Signature>());
-		for (int i=1; i<=noSigners; ++i)
-		{
-			forgery.add(i, new LinkedList<Signature>());
-			for (int j=1; j<=10; ++j)
-			{
-				String filename = String.format("%03d", i) + "_f_" + j + ".sig";
-				Signature s = loadSUSigFile(filename);
-				if (s!= null) forgery.get(i).add(s);
-			}
-		}
+		File f = new File("STORAGE");
+		return f;
 	}
-
 
 	/* zapisuje obecny podpis do pliku*/
 	private static void writeSigToFile(String filename, Signature signature)
@@ -564,13 +546,6 @@ public class OSVOMD_COMP
 
 
 	}
-
-	private static File getFilePath()
-	{
-		File f = new File("STORAGE");
-		return f;
-	}
-
 
 	/* czyta podpis z pliku*/
 	private static Signature readSigFromFile(String filename)
@@ -757,6 +732,25 @@ public class OSVOMD_COMP
 
 
 
+	}
+
+	private static void generateScript()
+	{
+		String turboString = "";
+		for (Constants.X_W = 0.7; Constants.X_W <= 0.9; Constants.X_W += 0.1) //3
+		{
+			for (Constants.Y_W = 1.0; Constants.Y_W <= 2.0; Constants.Y_W += 0.2) //6
+			{
+				for (Constants.P_W = 0.3; Constants.P_W <= 0.6; Constants.P_W += 0.1) //4
+				{
+					turboString += "java -jar .\\OSVOMD_C.jar " + Constants.X_W + " " + Constants.Y_W + " " + Constants.P_W + " " + Constants.T_W + " && ";
+				}
+			}
+		}
+		turboString += "dir";
+	
+		writeToFile("SCRIPT", turboString);
+		System.out.println(turboString);
 	}
 
 	/* zwraca string z aktualn¹ dat¹*/
