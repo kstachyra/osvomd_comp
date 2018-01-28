@@ -18,7 +18,7 @@ public class Constants
     public final static String APK_CONSTANT = "asdkl;";
 
     /*pattern*/
-    public final static int MAX_PATTERN_ITERATIONS = 10;
+    public final static int MAX_TEMPLATE_ITERATIONS = 10;
 
     /*compare*/
     public static double X_W = 0.8;
